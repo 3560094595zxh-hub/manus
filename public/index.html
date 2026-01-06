@@ -633,6 +633,51 @@
                 min-width: 100%;
             }
         }
+        
+        /* 附件显示样式 */
+        .attachment-box {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            max-width: 400px;
+        }
+        
+        .attachment-icon {
+            font-size: 32px;
+            margin-right: 12px;
+        }
+        
+        .attachment-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .attachment-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+        
+        .attachment-link {
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 12px;
+            background: #e7f1ff;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .attachment-link:hover {
+            background: #007bff;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -1075,8 +1120,7 @@
                                 }
                                 
                                 if (c.fileUrl) {
-                                    const fileName = c.fileName || '下载文件';
-                                    addMessage('assistant', `📎 附件: ${fileName}\n🔗 ${c.fileUrl}`);
+                                    addAttachmentMessage(c.fileName, c.fileUrl);
                                 }
                             }
                         }
@@ -1204,6 +1248,46 @@
                     }
                 });
             }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 专门用于显示附件的函数，避免 URL 被 Markdown 解析
+        function addAttachmentMessage(fileName, fileUrl) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const safeFileName = escapeHtml(fileName || '下载文件');
+            const safeUrl = escapeHtml(fileUrl);
+            
+            // 根据文件扩展名显示不同图标
+            const ext = (fileName || '').split('.').pop().toLowerCase();
+            let fileIcon = '📄';
+            if (['ppt', 'pptx'].includes(ext)) fileIcon = '📊';
+            else if (['doc', 'docx'].includes(ext)) fileIcon = '📝';
+            else if (['xls', 'xlsx'].includes(ext)) fileIcon = '📈';
+            else if (['pdf'].includes(ext)) fileIcon = '📕';
+            else if (['zip', 'rar', '7z'].includes(ext)) fileIcon = '📦';
+            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) fileIcon = '🖼️';
+            else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
+            else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
+            
+            messageDiv.innerHTML = `
+                <div class="role">📎 附件</div>
+                <div class="content">
+                    <div class="attachment-box">
+                        <span class="attachment-icon">${fileIcon}</span>
+                        <div class="attachment-info">
+                            <div class="attachment-name">${safeFileName}</div>
+                            <a href="${safeUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="timestamp">${timestamp}</div>
+            `;
             
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
@@ -1486,11 +1570,28 @@
                         }
                         
                         if (c.fileUrl) {
+                            const ext = (c.fileName || '').split('.').pop().toLowerCase();
+                            let fileIcon = '📄';
+                            if (['ppt', 'pptx'].includes(ext)) fileIcon = '📊';
+                            else if (['doc', 'docx'].includes(ext)) fileIcon = '📝';
+                            else if (['xls', 'xlsx'].includes(ext)) fileIcon = '📈';
+                            else if (['pdf'].includes(ext)) fileIcon = '📕';
+                            else if (['zip', 'rar', '7z'].includes(ext)) fileIcon = '📦';
+                            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) fileIcon = '🖼️';
+                            else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
+                            else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
+                            
                             html += `
                                 <div class="message assistant">
                                     <div class="role">📎 附件</div>
                                     <div class="content">
-                                        <a href="${c.fileUrl}" target="_blank">${escapeHtml(c.fileName || '下载文件')}</a>
+                                        <div class="attachment-box">
+                                            <span class="attachment-icon">${fileIcon}</span>
+                                            <div class="attachment-info">
+                                                <div class="attachment-name">${escapeHtml(c.fileName || '下载文件')}</div>
+                                                <a href="${escapeHtml(c.fileUrl)}" target="_blank" class="attachment-link" download="${escapeHtml(c.fileName || '下载文件')}">点击下载</a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             `;
