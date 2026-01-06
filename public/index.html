@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manus API Client</title>
+    <!-- Markdown 渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/xml.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -205,9 +216,113 @@
         }
         
         .message .content {
-            white-space: pre-wrap;
             word-break: break-word;
             line-height: 1.6;
+        }
+        
+        /* Markdown 渲染样式 */
+        .message .content h1,
+        .message .content h2,
+        .message .content h3,
+        .message .content h4,
+        .message .content h5,
+        .message .content h6 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .message .content h1 { font-size: 1.5em; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
+        .message .content h2 { font-size: 1.3em; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
+        .message .content h3 { font-size: 1.1em; }
+        .message .content h4 { font-size: 1em; }
+        
+        .message .content p {
+            margin-bottom: 12px;
+        }
+        
+        .message .content ul,
+        .message .content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .message .content li {
+            margin-bottom: 4px;
+        }
+        
+        .message .content code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .message .content pre {
+            background: #f6f8fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+        
+        .message .content pre code {
+            background: transparent;
+            padding: 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        .message .content blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 16px;
+            margin: 12px 0;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .message .content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        
+        .message .content th,
+        .message .content td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .message .content th {
+            background: #f6f8fa;
+            font-weight: 600;
+        }
+        
+        .message .content a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .message .content a:hover {
+            text-decoration: underline;
+        }
+        
+        .message .content strong {
+            font-weight: 600;
+        }
+        
+        .message .content em {
+            font-style: italic;
+        }
+        
+        .message .content hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 16px 0;
         }
         
         .message .timestamp {
@@ -1067,14 +1182,47 @@
             const roleText = role === 'user' ? '👤 您' : '🤖 Manus';
             const timestamp = new Date().toLocaleTimeString();
             
+            // 对于助手消息，使用 Markdown 渲染；对于用户消息，保持纯文本
+            let renderedContent;
+            if (role === 'assistant') {
+                renderedContent = renderMarkdown(content);
+            } else {
+                renderedContent = escapeHtml(content);
+            }
+            
             messageDiv.innerHTML = `
                 <div class="role">${roleText}</div>
-                <div class="content">${escapeHtml(content)}</div>
+                <div class="content">${renderedContent}</div>
                 <div class="timestamp">${timestamp}</div>
             `;
             
+            // 对于助手消息，应用代码高亮
+            if (role === 'assistant') {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    if (window.hljs) {
+                        hljs.highlightElement(block);
+                    }
+                });
+            }
+            
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
+        }
+        
+        // Markdown 渲染函数
+        function renderMarkdown(text) {
+            if (typeof marked !== 'undefined') {
+                // 配置 marked 选项
+                marked.setOptions({
+                    breaks: true,  // 支持换行
+                    gfm: true,     // 支持 GitHub 风格 Markdown
+                    sanitize: false
+                });
+                return marked.parse(text);
+            } else {
+                // 如果 marked 未加载，回退到简单的文本显示
+                return escapeHtml(text).replace(/\n/g, '<br>');
+            }
         }
         
         function addSystemMessage(content) {
@@ -1327,10 +1475,12 @@
                     for (const c of content) {
                         if (c.type === 'output_text' && c.text) {
                             const roleText = role === 'user' ? '👤 用户' : '🤖 助手';
+                            // 对于助手消息使用 Markdown 渲染
+                            const contentHtml = role === 'assistant' ? renderMarkdown(c.text) : escapeHtml(c.text);
                             html += `
                                 <div class="message ${role}">
                                     <div class="role">${roleText}</div>
-                                    <div class="content">${escapeHtml(c.text)}</div>
+                                    <div class="content">${contentHtml}</div>
                                 </div>
                             `;
                         }
@@ -1349,6 +1499,13 @@
                 }
                 
                 container.innerHTML = html;
+                
+                // 应用代码高亮
+                container.querySelectorAll('pre code').forEach((block) => {
+                    if (window.hljs) {
+                        hljs.highlightElement(block);
+                    }
+                });
                 
             } catch (error) {
                 container.innerHTML = `<div class="error-box">❌ 加载失败: ${error.message}</div>`;
