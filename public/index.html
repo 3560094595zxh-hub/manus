@@ -1481,6 +1481,12 @@
                 else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
                 else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
                 
+                // 如果是 Manus CDN 的文件，使用代理下载
+                const isManusFile = fileUrl.includes('manuscdn.com');
+                const downloadUrl = isManusFile 
+                    ? `/api/proxy-download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent(safeFileName)}`
+                    : safeUrl;
+                
                 messageDiv.innerHTML = `
                     <div class="role">📎 附件</div>
                     <div class="content">
@@ -1488,7 +1494,7 @@
                             <span class="attachment-icon">${fileIcon}</span>
                             <div class="attachment-info">
                                 <div class="attachment-name">${safeFileName}</div>
-                                <a href="${safeUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
+                                <a href="${downloadUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
                             </div>
                         </div>
                     </div>
@@ -1506,8 +1512,18 @@
         // 加载幻灯片数据
         async function loadSlidesData(viewerId, jsonUrl) {
             try {
-                const response = await fetch(jsonUrl);
-                if (!response.ok) throw new Error('无法加载幻灯片数据');
+                // 通过后端代理获取幻灯片数据（解决 CORS 问题）
+                const response = await fetch('/api/proxy-slides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: jsonUrl })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || '无法加载幻灯片数据');
+                }
                 
                 const data = await response.json();
                 
@@ -1929,6 +1945,13 @@
                             else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
                             else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
                             
+                            // 如果是 Manus CDN 的文件，使用代理下载
+                            const isManusFile = c.fileUrl.includes('manuscdn.com');
+                            const safeFileName = escapeHtml(c.fileName || '下载文件');
+                            const downloadUrl = isManusFile 
+                                ? `/api/proxy-download?url=${encodeURIComponent(c.fileUrl)}&filename=${encodeURIComponent(safeFileName)}`
+                                : escapeHtml(c.fileUrl);
+                            
                             html += `
                                 <div class="message assistant">
                                     <div class="role">📎 附件</div>
@@ -1936,8 +1959,8 @@
                                         <div class="attachment-box">
                                             <span class="attachment-icon">${fileIcon}</span>
                                             <div class="attachment-info">
-                                                <div class="attachment-name">${escapeHtml(c.fileName || '下载文件')}</div>
-                                                <a href="${escapeHtml(c.fileUrl)}" target="_blank" class="attachment-link" download="${escapeHtml(c.fileName || '下载文件')}">点击下载</a>
+                                                <div class="attachment-name">${safeFileName}</div>
+                                                <a href="${downloadUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
                                             </div>
                                         </div>
                                     </div>

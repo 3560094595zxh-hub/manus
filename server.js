@@ -256,6 +256,82 @@ app.delete('/api/delete-file/:fileId', async (req, res) => {
     }
 });
 
+// 代理获取幻灯片 JSON 数据（解决 CORS 问题）
+app.post('/api/proxy-slides', async (req, res) => {
+    try {
+        const { url } = req.body;
+        
+        if (!url) {
+            return res.status(400).json({ error: '缺少 URL' });
+        }
+
+        // 验证 URL 是否来自 Manus CDN
+        if (!url.includes('manuscdn.com')) {
+            return res.status(400).json({ error: '无效的幻灯片 URL' });
+        }
+
+        console.log('Proxying slides JSON:', url.substring(0, 100) + '...');
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Slides data loaded, title:', data.title || 'N/A');
+        res.json(data);
+        
+    } catch (error) {
+        console.error('Proxy slides error:', error);
+        res.status(500).json({ error: error.message || '获取幻灯片数据失败' });
+    }
+});
+
+// 代理下载文件（解决 CORS 问题）
+app.get('/api/proxy-download', async (req, res) => {
+    try {
+        const { url, filename } = req.query;
+        
+        if (!url) {
+            return res.status(400).json({ error: '缺少 URL' });
+        }
+
+        // 验证 URL 是否来自 Manus CDN
+        if (!url.includes('manuscdn.com')) {
+            return res.status(400).json({ error: '无效的文件 URL' });
+        }
+
+        console.log('Proxying file download:', url.substring(0, 100) + '...');
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 设置响应头
+        const contentType = response.headers.get('content-type') || 'application/octet-stream';
+        res.setHeader('Content-Type', contentType);
+        
+        if (filename) {
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        }
+
+        // 流式传输文件内容
+        response.body.pipe(res);
+        
+    } catch (error) {
+        console.error('Proxy download error:', error);
+        res.status(500).json({ error: error.message || '下载文件失败' });
+    }
+});
+
 // 健康检查
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
