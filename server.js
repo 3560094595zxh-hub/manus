@@ -9,8 +9,8 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Manus API 基础 URL
-const MANUS_API_BASE = 'https://api.manus.im/v1';
+// Manus API 基础 URL (注意：官方文档使用 api.manus.ai)
+const MANUS_API_BASE = 'https://api.manus.ai/v1';
 
 // 中间件
 app.use(cors());
@@ -66,7 +66,8 @@ app.post('/api/create-task', async (req, res) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${api_key}`
+                'accept': 'application/json',
+                'API_KEY': api_key
             },
             body: JSON.stringify(requestBody)
         });
@@ -76,7 +77,7 @@ app.post('/api/create-task', async (req, res) => {
         if (!response.ok) {
             console.error('Manus API error:', data);
             return res.status(response.status).json({ 
-                error: data.error?.message || data.message || '创建任务失败' 
+                error: data.message || data.error?.message || '创建任务失败' 
             });
         }
 
@@ -104,7 +105,8 @@ app.post('/api/get-task/:taskId', async (req, res) => {
         const response = await fetch(`${MANUS_API_BASE}/tasks/${taskId}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${api_key}`
+                'accept': 'application/json',
+                'API_KEY': api_key
             }
         });
 
@@ -113,7 +115,7 @@ app.post('/api/get-task/:taskId', async (req, res) => {
         if (!response.ok) {
             console.error('Manus API error:', data);
             return res.status(response.status).json({ 
-                error: data.error?.message || data.message || '获取任务失败' 
+                error: data.message || data.error?.message || '获取任务失败' 
             });
         }
 
@@ -151,7 +153,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
         const response = await fetch(`${MANUS_API_BASE}/files`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${api_key}`,
+                'API_KEY': api_key,
                 ...formData.getHeaders()
             },
             body: formData
@@ -167,7 +169,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
         if (!response.ok) {
             console.error('Manus API error:', data);
             return res.status(response.status).json({ 
-                error: data.error?.message || data.message || '上传文件失败' 
+                error: data.message || data.error?.message || '上传文件失败' 
             });
         }
 
@@ -197,7 +199,8 @@ app.post('/api/list-files', async (req, res) => {
         const response = await fetch(`${MANUS_API_BASE}/files`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${api_key}`
+                'accept': 'application/json',
+                'API_KEY': api_key
             }
         });
 
@@ -206,7 +209,7 @@ app.post('/api/list-files', async (req, res) => {
         if (!response.ok) {
             console.error('Manus API error:', data);
             return res.status(response.status).json({ 
-                error: data.error?.message || data.message || '获取文件列表失败' 
+                error: data.message || data.error?.message || '获取文件列表失败' 
             });
         }
 
@@ -233,7 +236,7 @@ app.delete('/api/delete-file/:fileId', async (req, res) => {
         const response = await fetch(`${MANUS_API_BASE}/files/${fileId}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${api_key}`
+                'API_KEY': api_key
             }
         });
 
@@ -241,7 +244,7 @@ app.delete('/api/delete-file/:fileId', async (req, res) => {
             const data = await response.json();
             console.error('Manus API error:', data);
             return res.status(response.status).json({ 
-                error: data.error?.message || data.message || '删除文件失败' 
+                error: data.message || data.error?.message || '删除文件失败' 
             });
         }
 
