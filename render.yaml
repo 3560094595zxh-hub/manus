@@ -1,0 +1,14 @@
+# Render Blueprint 配置文件
+# 用于一键部署到 Render
+
+services:
+  - type: web
+    name: manus-api-client
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production

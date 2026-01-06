@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manus API Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #f5f5f5;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .col {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #ffffff;
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #ffffff;
+        }
+        
+        .input-area textarea {
+            border: 2px dashed #3b82f6;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            background: #e7f3ff;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant {
+            background: #f0f0f0;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message .role {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        
+        .message .content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.6;
+        }
+        
+        .message .timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 6px;
+            text-align: right;
+        }
+        
+        .model-option {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+        
+        .model-option:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .model-option.selected {
+            border-color: #3b82f6;
+            background: #e7f3ff;
+        }
+        
+        .model-option .model-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .model-option .model-desc {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        #dropZone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+        
+        #dropZone:hover,
+        #dropZone.dragover {
+            border-color: #3b82f6;
+            background: #f0f7ff;
+        }
+        
+        #dropZone .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .file-item .file-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        
+        .file-item .file-info {
+            flex: 1;
+        }
+        
+        .file-item .file-name {
+            font-weight: 500;
+        }
+        
+        .file-item .file-id {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            background: #ffffff;
+            padding: 0 20px;
+        }
+        
+        .tab {
+            padding: 14px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #084298;
+        }
+        
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #f5c2c7;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #842029;
+        }
+        
+        .success-box {
+            background: #d1e7dd;
+            border: 1px solid #badbcc;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #0f5132;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .input-with-history {
+            position: relative;
+        }
+        
+        .input-with-history input {
+            padding-right: 40px;
+        }
+        
+        .history-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .history-dropdown.show {
+            display: block;
+        }
+        
+        .history-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:hover {
+            background: #f0f4ff;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-item .value {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .history-item .delete-btn {
+            color: #dc3545;
+            cursor: pointer;
+            padding: 2px 6px;
+            margin-left: 8px;
+        }
+        
+        .history-item .delete-btn:hover {
+            background: #f8d7da;
+            border-radius: 4px;
+        }
+        
+        .history-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #3b82f6;
+            font-size: 18px;
+            padding: 4px;
+        }
+        
+        .history-toggle:hover {
+            background: #f0f4ff;
+            border-radius: 4px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .col {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <h1>🤖 Manus API Client</h1>
+            
+            <!-- API 配置 -->
+            <div class="form-group">
+                <label for="apiKey">API Key</label>
+                <div class="input-with-history">
+                    <input type="password" id="apiKey" placeholder="sk-xxxxxxxx">
+                    <span class="history-toggle" onclick="toggleHistory('apiKey')">▼</span>
+                    <div class="history-dropdown" id="apiKeyHistory"></div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="toggleApiKey()" style="flex: 1; margin: 0;">👁️</button>
+                <button class="btn btn-primary" onclick="saveApiKey()" style="flex: 2; margin: 0;">保存 API Key</button>
+            </div>
+            <div id="apiKeyStatus" class="info-box hidden"></div>
+            
+            <!-- 模型选择 -->
+            <div class="form-group">
+                <label>模型选择</label>
+                <div class="model-option" onclick="selectModel('manus-1.6')" data-model="manus-1.6">
+                    <div class="model-name">manus-1.6</div>
+                    <div class="model-desc">标准版</div>
+                </div>
+                <div class="model-option selected" onclick="selectModel('manus-1.6-max')" data-model="manus-1.6-max">
+                    <div class="model-name">manus-1.6-max</div>
+                    <div class="model-desc">最强版</div>
+                </div>
+                <div class="model-option" onclick="selectModel('manus-1.6-lite')" data-model="manus-1.6-lite">
+                    <div class="model-name">manus-1.6-lite</div>
+                    <div class="model-desc">轻量版</div>
+                </div>
+            </div>
+            
+            <!-- 轮询设置 -->
+            <div class="form-group">
+                <label>轮询设置</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="pollInterval" value="3" min="1" max="30" style="width: 60px;"> 
+                    <span>秒/次</span>
+                </div>
+                <small style="color: #666; font-size: 11px;">任务执行期间的查询间隔</small>
+            </div>
+            
+            <!-- 任务 ID -->
+            <div class="form-group">
+                <label for="taskId">任务 ID</label>
+                <div class="input-with-history">
+                    <input type="text" id="taskId" placeholder="多轮对话时填写">
+                    <span class="history-toggle" onclick="toggleHistory('taskId')">▼</span>
+                    <div class="history-dropdown" id="taskIdHistory"></div>
+                </div>
+                <small style="color: #666; font-size: 11px;">留空则创建新对话</small>
+            </div>
+        </div>
+        
+        <!-- 右侧主内容区 -->
+        <div class="main-content">
+            <!-- 标签页 -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('chat')">💬 对话</div>
+                <div class="tab" onclick="switchTab('files')">📁 文件管理</div>
+                <div class="tab" onclick="switchTab('history')">📜 任务历史</div>
+            </div>
+            
+            <!-- 对话标签页 -->
+            <div id="tab-chat" class="tab-content active">
+                <div class="chat-container" id="chatContainer">
+                    <div class="info-box">👋 欢迎使用 Manus API Client！请先配置 API Key，然后开始对话。</div>
+                </div>
+                
+                <div class="input-area">
+                    <!-- 附件列表 -->
+                    <div id="attachmentListContainer" style="margin-bottom: 12px; display: none;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 6px;">📎 已添加的附件：</div>
+                        <ul id="attachmentList" class="file-list" style="margin: 0;"></ul>
+                    </div>
+                    <textarea id="messageInput" placeholder="输入您的消息...（Shift+Enter 换行，Enter 发送）" onkeydown="handleKeyDown(event)"></textarea>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn">
+                            📤 发送消息
+                        </button>
+                        <button class="btn btn-success" onclick="manualRefresh()" id="refreshBtn" style="display: none;">
+                            🔄 刷新结果
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearChat()">🗑️ 清空对话</button>
+                        <button class="btn btn-warning" onclick="stopPolling()" id="stopBtn" style="display: none;">
+                            ⏹️ 停止轮询
+                        </button>
+                        <span id="taskStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文件管理标签页 -->
+            <div id="tab-files" class="tab-content">
+                <div style="padding: 20px; overflow-y: auto; flex: 1;">
+                    <div class="row">
+                        <div class="col">
+                            <h3 style="margin-bottom: 16px;">📤 上传文件</h3>
+                            <div id="dropZone" onclick="document.getElementById('fileInput').click()">
+                                <div class="icon">📁</div>
+                                <div>点击或拖拽文件到此处上传</div>
+                                <div style="font-size: 12px; color: #666; margin-top: 8px;">支持各种文件格式，最大 50MB</div>
+                            </div>
+                            <input type="file" id="fileInput" style="display: none;" onchange="uploadFile(this.files[0])">
+                            <div id="uploadStatus" class="hidden" style="margin-top: 16px;"></div>
+                        </div>
+                        
+                        <div class="col">
+                            <h3 style="margin-bottom: 16px;">📂 已上传文件</h3>
+                            <button class="btn btn-secondary" onclick="refreshFileList()">🔄 刷新列表</button>
+                            <ul id="fileList" class="file-list" style="margin-top: 16px;">
+                                <li class="file-item" style="color: #666;">点击"刷新列表"查看已上传的文件</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 任务历史标签页 -->
+            <div id="tab-history" class="tab-content">
+                <div style="padding: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="historyTaskId">输入任务 ID 查看历史</label>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="input-with-history" style="flex: 1;">
+                                <input type="text" id="historyTaskId" placeholder="任务 ID">
+                                <span class="history-toggle" onclick="toggleHistory('historyTaskId')">▼</span>
+                                <div class="history-dropdown" id="historyTaskIdHistory"></div>
+                            </div>
+                            <button class="btn btn-primary" onclick="loadTaskHistory()">🔍 查询</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="historyContainer" style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <div class="info-box">输入任务 ID 查看完整对话历史</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== 全局变量 ====================
+        let currentModel = 'manus-1.6-max';
+        let currentTaskId = null;
+        let pollingInterval = null;
+        let isPolling = false;
+        let uploadedFiles = [];
+        let lastMessageCount = 0;
+        let streamingMessageEl = null;
+        
+        // ==================== 历史记录管理 ====================
+        
+        function getHistory(type) {
+            const key = `manus_history_${type}`;
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        function saveToHistory(type, value) {
+            if (!value) return;
+            const key = `manus_history_${type}`;
+            let history = getHistory(type);
+            
+            // 移除重复项
+            history = history.filter(item => item !== value);
+            
+            // 添加到开头
+            history.unshift(value);
+            
+            // 最多保存10条
+            history = history.slice(0, 10);
+            
+            localStorage.setItem(key, JSON.stringify(history));
+            updateHistoryDropdown(type);
+        }
+        
+        function deleteFromHistory(type, value) {
+            const key = `manus_history_${type}`;
+            let history = getHistory(type);
+            history = history.filter(item => item !== value);
+            localStorage.setItem(key, JSON.stringify(history));
+            updateHistoryDropdown(type);
+        }
+        
+        function updateHistoryDropdown(type) {
+            const history = getHistory(type);
+            const dropdown = document.getElementById(`${type}History`);
+            
+            if (!dropdown) return;
+            
+            if (history.length === 0) {
+                dropdown.innerHTML = '<div class="history-item" style="color: #999;">暂无历史记录</div>';
+                return;
+            }
+            
+            dropdown.innerHTML = history.map(item => {
+                const displayValue = type === 'apiKey' ? maskApiKey(item) : item;
+                return `
+                    <div class="history-item">
+                        <span class="value" onclick="selectHistory('${type}', '${escapeAttr(item)}')">${displayValue}</span>
+                        <span class="delete-btn" onclick="deleteFromHistory('${type}', '${escapeAttr(item)}')">✕</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleHistory(type) {
+            const dropdown = document.getElementById(`${type}History`);
+            const isVisible = dropdown.classList.contains('show');
+            
+            // 关闭所有下拉框
+            document.querySelectorAll('.history-dropdown').forEach(d => d.classList.remove('show'));
+            
+            if (!isVisible) {
+                updateHistoryDropdown(type);
+                dropdown.classList.add('show');
+            }
+        }
+        
+        function selectHistory(type, value) {
+            let inputId = type;
+            if (type === 'historyTaskId') {
+                inputId = 'historyTaskId';
+            }
+            
+            document.getElementById(inputId).value = value;
+            document.querySelectorAll('.history-dropdown').forEach(d => d.classList.remove('show'));
+        }
+        
+        function maskApiKey(key) {
+            if (key.length <= 10) return key;
+            return key.substring(0, 6) + '****' + key.substring(key.length - 4);
+        }
+        
+        function escapeAttr(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+        
+        // ==================== API Key 相关 ====================
+        
+        function toggleApiKey() {
+            const input = document.getElementById('apiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+        
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (apiKey) {
+                localStorage.setItem('manus_api_key', apiKey);
+                saveToHistory('apiKey', apiKey);
+                showStatus('apiKeyStatus', '✅ API Key 已保存', 'success');
+            } else {
+                showStatus('apiKeyStatus', '❌ 请输入 API Key', 'error');
+            }
+        }
+        
+        function getApiKey() {
+            return document.getElementById('apiKey').value.trim();
+        }
+        
+        // ==================== 标签页切换 ====================
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        // ==================== 模型选择 ====================
+        
+        function selectModel(model) {
+            currentModel = model;
+            document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
+            document.querySelector(`.model-option[data-model="${model}"]`).classList.add('selected');
+        }
+        
+        // ==================== 发送消息 ====================
+        
+        async function sendMessage() {
+            const apiKey = getApiKey();
+            const message = document.getElementById('messageInput').value.trim();
+            const taskId = document.getElementById('taskId').value.trim() || currentTaskId;
+            
+            if (!apiKey) {
+                alert('请先配置 API Key');
+                return;
+            }
+            
+            if (!message) {
+                alert('请输入消息');
+                return;
+            }
+            
+            // 添加用户消息到聊天
+            addMessage('user', message);
+            document.getElementById('messageInput').value = '';
+            
+            // 禁用发送按钮，显示停止按钮和刷新按钮
+            const sendBtn = document.getElementById('sendBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
+            stopBtn.style.display = 'inline-block';
+            refreshBtn.style.display = 'inline-block';
+            
+            // 立即添加临时反馈消息
+            addSystemMessage('⏳ 正在发送请求到 Manus API...');
+            
+            // 重置消息计数
+            lastMessageCount = 0;
+            
+            try {
+                // 构建附件
+                const attachments = uploadedFiles.map(f => ({
+                    type: 'file_id',
+                    file_id: f.file_id
+                }));
+                
+                const response = await fetch('/api/create-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        prompt: message,
+                        task_id: taskId,
+                        agent_profile: currentModel,
+                        task_mode: 'agent',
+                        attachments: attachments
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // 移除临时消息
+                removeSystemMessages();
+                
+                if (data.error) {
+                    addMessage('assistant', `❌ 错误: ${data.error}`);
+                    resetButtons();
+                    return;
+                }
+                
+                currentTaskId = data.id || data.task_id;
+                document.getElementById('taskId').value = currentTaskId;
+                
+                // 保存任务ID到历史
+                saveToHistory('taskId', currentTaskId);
+                
+                addSystemMessage(`✅ 任务已创建，ID: ${currentTaskId}`);
+                addSystemMessage('⏳ 正在等待 Manus 处理...');
+                
+                // 开始轮询
+                startPolling(currentTaskId);
+                
+            } catch (error) {
+                removeSystemMessages();
+                addMessage('assistant', `❌ 发送失败: ${error.message}`);
+                resetButtons();
+            }
+        }
+        
+        // ==================== 轮询管理 ====================
+        
+        function startPolling(taskId) {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            isPolling = true;
+            const apiKey = getApiKey();
+            let pollCount = 0;
+            const interval = parseInt(document.getElementById('pollInterval').value) * 1000 || 3000;
+            
+            const refreshTaskHistory = async () => {
+                if (!isPolling) {
+                    clearInterval(pollingInterval);
+                    return;
+                }
+                
+                pollCount++;
+                updatePollInfo(pollCount);
+                
+                try {
+                    const response = await fetch(`/api/get-task/${taskId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ api_key: apiKey })
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('刷新失败:', response.status);
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        console.error('API 错误:', data.error);
+                        return;
+                    }
+                    
+                    const status = data.status;
+                    const output = data.output || [];
+                    
+                    updateTaskStatus(status, pollCount);
+                    
+                    // 检测是否有新消息
+                    const assistantMessages = output.filter(item => item.role === 'assistant');
+                    const currentMessageCount = assistantMessages.length;
+                    
+                    // 如果有新消息，更新显示
+                    if (currentMessageCount > lastMessageCount) {
+                        // 移除流式消息
+                        if (streamingMessageEl) {
+                            streamingMessageEl.remove();
+                            streamingMessageEl = null;
+                        }
+                        
+                        // 只添加新的消息
+                        for (let i = lastMessageCount; i < currentMessageCount; i++) {
+                            const item = assistantMessages[i];
+                            const content = item.content || [];
+                            
+                            for (const c of content) {
+                                if (c.type === 'output_text' && c.text) {
+                                    addMessage('assistant', c.text);
+                                }
+                                
+                                if (c.fileUrl) {
+                                    const fileName = c.fileName || '下载文件';
+                                    addMessage('assistant', `📎 附件: ${fileName}\n🔗 ${c.fileUrl}`);
+                                }
+                            }
+                        }
+                        
+                        lastMessageCount = currentMessageCount;
+                    }
+                    
+                    // 检查任务是否完成
+                    if (status === 'completed' || status === 'failed' || status === 'error') {
+                        stopPolling();
+                        removeSystemMessages();
+                        
+                        if (streamingMessageEl) {
+                            streamingMessageEl.remove();
+                            streamingMessageEl = null;
+                        }
+                        
+                        if (currentMessageCount === 0) {
+                            addMessage('assistant', '✅ 任务已完成');
+                        }
+                        
+                        resetButtons();
+                    }
+                    
+                } catch (error) {
+                    console.error('刷新出错:', error);
+                }
+            };
+            
+            // 立即执行一次
+            refreshTaskHistory();
+            
+            // 设置定时刷新
+            pollingInterval = setInterval(refreshTaskHistory, interval);
+        }
+        
+        function stopPolling() {
+            isPolling = false;
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            resetButtons();
+            removeSystemMessages();
+        }
+        
+        function manualRefresh() {
+            if (currentTaskId) {
+                lastMessageCount = 0;
+                startPolling(currentTaskId);
+            }
+        }
+        
+        function resetButtons() {
+            const sendBtn = document.getElementById('sendBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '📤 发送消息';
+            stopBtn.style.display = 'none';
+            refreshBtn.style.display = 'none';
+        }
+        
+        function updatePollInfo(count) {
+            const statusEl = document.getElementById('taskStatus');
+            statusEl.innerHTML = `<span class="pulse">🔄 轮询中... (${count})</span>`;
+        }
+        
+        function updateTaskStatus(status, pollCount) {
+            const statusEl = document.getElementById('taskStatus');
+            let html = '';
+            
+            switch(status) {
+                case 'running':
+                case 'processing':
+                    html = `<span class="status-badge status-running">🔄 处理中 (${pollCount})</span>`;
+                    break;
+                case 'completed':
+                    html = '<span class="status-badge status-completed">✅ 已完成</span>';
+                    break;
+                case 'failed':
+                case 'error':
+                    html = '<span class="status-badge status-failed">❌ 失败</span>';
+                    break;
+                case 'pending':
+                    html = '<span class="status-badge status-pending">⏸️ 等待输入</span>';
+                    break;
+                default:
+                    html = `<span class="status-badge">${status}</span>`;
+            }
+            
+            statusEl.innerHTML = html;
+        }
+        
+        // ==================== 消息显示 ====================
+        
+        function addMessage(role, content) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const roleText = role === 'user' ? '👤 您' : '🤖 Manus';
+            const timestamp = new Date().toLocaleTimeString();
+            
+            messageDiv.innerHTML = `
+                <div class="role">${roleText}</div>
+                <div class="content">${escapeHtml(content)}</div>
+                <div class="timestamp">${timestamp}</div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addSystemMessage(content) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'info-box system-message';
+            messageDiv.textContent = content;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function removeSystemMessages() {
+            document.querySelectorAll('.system-message').forEach(el => el.remove());
+        }
+        
+        function clearChat() {
+            stopPolling();
+            document.getElementById('chatContainer').innerHTML = '<div class="info-box">👋 对话已清空，开始新的对话吧！</div>';
+            currentTaskId = null;
+            document.getElementById('taskId').value = '';
+            uploadedFiles = [];
+            updateAttachmentList();
+            lastMessageCount = 0;
+            streamingMessageEl = null;
+            updateTaskStatus('');
+        }
+        
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // ==================== 文件上传 ====================
+        
+        function setupDragDrop() {
+            const dropZone = document.getElementById('dropZone');
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    uploadFile(files[0]);
+                }
+            });
+        }
+        
+        async function uploadFile(file) {
+            const apiKey = getApiKey();
+            
+            if (!apiKey) {
+                alert('请先配置 API Key');
+                return;
+            }
+            
+            const statusEl = document.getElementById('uploadStatus');
+            statusEl.classList.remove('hidden');
+            statusEl.innerHTML = '<div class="info-box"><span class="loading"></span> 正在上传...</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('api_key', apiKey);
+                formData.append('file', file);
+                
+                const response = await fetch('/api/upload-file', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    statusEl.innerHTML = `<div class="error-box">❌ 上传失败: ${data.error}</div>`;
+                } else {
+                    statusEl.innerHTML = `<div class="success-box">✅ 上传成功！文件已添加到对话附件</div>`;
+                    
+                    // 添加到已上传文件列表
+                    uploadedFiles.push({
+                        file_id: data.file_id,
+                        filename: data.filename
+                    });
+                    updateAttachmentList();
+                    refreshFileList();
+                    
+                    // 自动切换到对话标签页
+                    setTimeout(() => {
+                        switchTab('chat');
+                    }, 1000);
+                }
+                
+            } catch (error) {
+                statusEl.innerHTML = `<div class="error-box">❌ 上传失败: ${error.message}</div>`;
+            }
+        }
+        
+        function updateAttachmentList() {
+            const list = document.getElementById('attachmentList');
+            const container = document.getElementById('attachmentListContainer');
+            
+            if (!list) return;
+            
+            if (uploadedFiles.length === 0) {
+                if (container) container.style.display = 'none';
+                list.innerHTML = '';
+            } else {
+                if (container) container.style.display = 'block';
+                list.innerHTML = uploadedFiles.map((f, index) => `
+                    <li class="file-item">
+                        <span class="file-icon">📄</span>
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(f.filename)}</div>
+                            <div class="file-id">${f.file_id}</div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="removeAttachment(${index})">移除</button>
+                    </li>
+                `).join('');
+            }
+        }
+        
+        function removeAttachment(index) {
+            uploadedFiles.splice(index, 1);
+            updateAttachmentList();
+        }
+        
+        async function refreshFileList() {
+            const apiKey = getApiKey();
+            
+            if (!apiKey) {
+                alert('请先配置 API Key');
+                return;
+            }
+            
+            const list = document.getElementById('fileList');
+            list.innerHTML = '<li class="file-item"><span class="loading"></span> 加载中...</li>';
+            
+            try {
+                const response = await fetch('/api/list-files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    list.innerHTML = `<li class="file-item" style="color: #dc3545;">❌ ${data.error}</li>`;
+                    return;
+                }
+                
+                const files = data.data || data.files || [];
+                
+                if (files.length === 0) {
+                    list.innerHTML = '<li class="file-item" style="color: #666;">暂无上传的文件</li>';
+                    return;
+                }
+                
+                list.innerHTML = files.map(f => `
+                    <li class="file-item">
+                        <span class="file-icon">📄</span>
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(f.filename || f.name || 'Unknown')}</div>
+                            <div class="file-id">${f.id}</div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="addFileToChat('${f.id}', '${escapeAttr(f.filename || f.name || 'file')}')">添加到对话</button>
+                    </li>
+                `).join('');
+                
+            } catch (error) {
+                list.innerHTML = `<li class="file-item" style="color: #dc3545;">❌ 加载失败: ${error.message}</li>`;
+            }
+        }
+        
+        function addFileToChat(fileId, filename) {
+            if (uploadedFiles.some(f => f.file_id === fileId)) {
+                alert('该文件已添加');
+                return;
+            }
+            
+            uploadedFiles.push({ file_id: fileId, filename: filename });
+            updateAttachmentList();
+            switchTab('chat');
+        }
+        
+        // ==================== 任务历史 ====================
+        
+        async function loadTaskHistory() {
+            const apiKey = getApiKey();
+            const taskId = document.getElementById('historyTaskId').value.trim();
+            
+            if (!apiKey) {
+                alert('请先配置 API Key');
+                return;
+            }
+            
+            if (!taskId) {
+                alert('请输入任务 ID');
+                return;
+            }
+            
+            saveToHistory('taskId', taskId);
+            
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '<div class="info-box"><span class="loading"></span> 加载中...</div>';
+            
+            try {
+                const response = await fetch(`/api/get-task/${taskId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    container.innerHTML = `<div class="error-box">❌ 错误: ${data.error}</div>`;
+                    return;
+                }
+                
+                const output = data.output || [];
+                
+                if (output.length === 0) {
+                    container.innerHTML = '<div class="info-box">该任务暂无对话记录</div>';
+                    return;
+                }
+                
+                let html = `
+                    <div class="info-box">
+                        <strong>任务 ID:</strong> ${data.id}<br>
+                        <strong>状态:</strong> ${data.status}<br>
+                        <strong>模型:</strong> ${data.model || 'N/A'}<br>
+                        <strong>消息数:</strong> ${output.length}
+                    </div>
+                `;
+                
+                for (const item of output) {
+                    const role = item.role;
+                    const content = item.content || [];
+                    
+                    for (const c of content) {
+                        if (c.type === 'output_text' && c.text) {
+                            const roleText = role === 'user' ? '👤 用户' : '🤖 助手';
+                            html += `
+                                <div class="message ${role}">
+                                    <div class="role">${roleText}</div>
+                                    <div class="content">${escapeHtml(c.text)}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        if (c.fileUrl) {
+                            html += `
+                                <div class="message assistant">
+                                    <div class="role">📎 附件</div>
+                                    <div class="content">
+                                        <a href="${c.fileUrl}" target="_blank">${escapeHtml(c.fileName || '下载文件')}</a>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                container.innerHTML = `<div class="error-box">❌ 加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        // ==================== 工具函数 ====================
+        
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.classList.remove('hidden', 'info-box', 'error-box', 'success-box');
+            el.classList.add(type === 'error' ? 'error-box' : type === 'success' ? 'success-box' : 'info-box');
+            el.textContent = message;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ==================== 初始化 ====================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化拖拽上传
+            setupDragDrop();
+            
+            // 加载保存的 API Key
+            const savedApiKey = localStorage.getItem('manus_api_key');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+            
+            // 点击页面其他地方关闭下拉框
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.input-with-history')) {
+                    document.querySelectorAll('.history-dropdown').forEach(d => d.classList.remove('show'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
