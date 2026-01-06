@@ -678,6 +678,168 @@
             background: #007bff;
             color: white;
         }
+        
+        /* 幻灯片查看器样式 */
+        .slides-viewer-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 8px 0;
+            max-width: 100%;
+        }
+        
+        .slides-viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .slides-viewer-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .slides-viewer-title .icon {
+            font-size: 24px;
+        }
+        
+        .slides-viewer-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .slides-viewer-controls button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .slides-viewer-controls button:hover {
+            background: #f0f0f0;
+        }
+        
+        .slides-viewer-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .slides-viewer-counter {
+            font-size: 14px;
+            color: #666;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .slides-viewer-content {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+            max-height: 400px;
+        }
+        
+        .slides-viewer-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .slides-viewer-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .slides-viewer-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .slides-thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        
+        .slides-thumbnail {
+            flex-shrink: 0;
+            width: 80px;
+            height: 45px;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .slides-thumbnail:hover {
+            border-color: #3b82f6;
+        }
+        
+        .slides-thumbnail.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+        
+        .slides-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .slides-viewer-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .slides-viewer-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .slides-viewer-actions .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .slides-viewer-actions .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .slides-viewer-actions .btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .slides-viewer-actions .btn-secondary:hover {
+            background: #dee2e6;
+        }
     </style>
 </head>
 <body>
@@ -1261,36 +1423,222 @@
             
             const timestamp = new Date().toLocaleTimeString();
             const safeFileName = escapeHtml(fileName || '下载文件');
-            const safeUrl = escapeHtml(fileUrl);
             
-            // 根据文件扩展名显示不同图标
-            const ext = (fileName || '').split('.').pop().toLowerCase();
-            let fileIcon = '📄';
-            if (['ppt', 'pptx'].includes(ext)) fileIcon = '📊';
-            else if (['doc', 'docx'].includes(ext)) fileIcon = '📝';
-            else if (['xls', 'xlsx'].includes(ext)) fileIcon = '📈';
-            else if (['pdf'].includes(ext)) fileIcon = '📕';
-            else if (['zip', 'rar', '7z'].includes(ext)) fileIcon = '📦';
-            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) fileIcon = '🖼️';
-            else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
-            else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
+            // 检测是否是 Manus 幻灯片 JSON 文件
+            const isSlidesJson = fileUrl && (
+                fileUrl.includes('c2xpZGVz.json') || // "slides" 的 base64 编码
+                (fileUrl.includes('.json') && fileUrl.includes('manuscdn.com'))
+            );
             
-            messageDiv.innerHTML = `
-                <div class="role">📎 附件</div>
-                <div class="content">
-                    <div class="attachment-box">
-                        <span class="attachment-icon">${fileIcon}</span>
-                        <div class="attachment-info">
-                            <div class="attachment-name">${safeFileName}</div>
-                            <a href="${safeUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
+            if (isSlidesJson) {
+                // 显示幻灯片查看器
+                const viewerId = 'slides-viewer-' + Date.now();
+                messageDiv.innerHTML = `
+                    <div class="role">📊 幻灯片</div>
+                    <div class="content">
+                        <div class="slides-viewer-box" id="${viewerId}">
+                            <div class="slides-viewer-header">
+                                <div class="slides-viewer-title">
+                                    <span class="icon">📊</span>
+                                    <span class="title-text">加载中...</span>
+                                </div>
+                                <div class="slides-viewer-controls">
+                                    <button onclick="slidesViewerPrev('${viewerId}')" class="prev-btn">◀ 上一页</button>
+                                    <span class="slides-viewer-counter">- / -</span>
+                                    <button onclick="slidesViewerNext('${viewerId}')" class="next-btn">下一页 ▶</button>
+                                </div>
+                            </div>
+                            <div class="slides-viewer-content">
+                                <div class="slides-viewer-loading">⏳ 正在加载幻灯片...</div>
+                            </div>
+                            <div class="slides-thumbnails"></div>
+                            <div class="slides-viewer-actions">
+                                <button class="btn-secondary" onclick="window.open('${escapeHtml(fileUrl)}', '_blank')">📥 下载原始数据</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="timestamp">${timestamp}</div>
-            `;
+                    <div class="timestamp">${timestamp}</div>
+                `;
+                
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+                
+                // 加载幻灯片数据
+                loadSlidesData(viewerId, fileUrl);
+            } else {
+                // 普通附件显示
+                const safeUrl = escapeHtml(fileUrl);
+                
+                // 根据文件扩展名显示不同图标
+                const ext = (fileName || '').split('.').pop().toLowerCase();
+                let fileIcon = '📄';
+                if (['ppt', 'pptx'].includes(ext)) fileIcon = '📊';
+                else if (['doc', 'docx'].includes(ext)) fileIcon = '📝';
+                else if (['xls', 'xlsx'].includes(ext)) fileIcon = '📈';
+                else if (['pdf'].includes(ext)) fileIcon = '📕';
+                else if (['zip', 'rar', '7z'].includes(ext)) fileIcon = '📦';
+                else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) fileIcon = '🖼️';
+                else if (['mp4', 'avi', 'mov', 'webm'].includes(ext)) fileIcon = '🎬';
+                else if (['mp3', 'wav', 'ogg'].includes(ext)) fileIcon = '🎵';
+                
+                messageDiv.innerHTML = `
+                    <div class="role">📎 附件</div>
+                    <div class="content">
+                        <div class="attachment-box">
+                            <span class="attachment-icon">${fileIcon}</span>
+                            <div class="attachment-info">
+                                <div class="attachment-name">${safeFileName}</div>
+                                <a href="${safeUrl}" target="_blank" class="attachment-link" download="${safeFileName}">点击下载</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timestamp">${timestamp}</div>
+                `;
+                
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        // 幻灯片数据存储
+        const slidesViewerData = {};
+        
+        // 加载幻灯片数据
+        async function loadSlidesData(viewerId, jsonUrl) {
+            try {
+                const response = await fetch(jsonUrl);
+                if (!response.ok) throw new Error('无法加载幻灯片数据');
+                
+                const data = await response.json();
+                
+                // 解析幻灯片数据
+                const slides = [];
+                const title = data.title || '幻灯片';
+                const isImageSlides = data.isImageSlides;
+                
+                if (data.files && Array.isArray(data.files)) {
+                    for (const file of data.files) {
+                        if (file.content) {
+                            // 从 HTML 内容中提取图片 URL
+                            const imgMatch = file.content.match(/<img[^>]+src=["']([^"']+)["']/);
+                            if (imgMatch) {
+                                slides.push({
+                                    id: file.id,
+                                    imageUrl: imgMatch[1],
+                                    note: file.note || ''
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // 如果有 images 字段，也尝试使用
+                if (data.images && Array.isArray(data.images)) {
+                    for (let i = 0; i < data.images.length; i++) {
+                        if (!slides[i]) {
+                            slides.push({
+                                id: `slide_${i + 1}`,
+                                imageUrl: data.images[i],
+                                note: ''
+                            });
+                        }
+                    }
+                }
+                
+                if (slides.length === 0) {
+                    throw new Error('未找到幻灯片内容');
+                }
+                
+                // 存储数据
+                slidesViewerData[viewerId] = {
+                    slides: slides,
+                    currentIndex: 0,
+                    title: title
+                };
+                
+                // 更新 UI
+                const viewer = document.getElementById(viewerId);
+                if (viewer) {
+                    viewer.querySelector('.title-text').textContent = title;
+                    updateSlidesViewer(viewerId);
+                    renderSlidesThumbnails(viewerId);
+                }
+                
+            } catch (error) {
+                console.error('加载幻灯片失败:', error);
+                const viewer = document.getElementById(viewerId);
+                if (viewer) {
+                    viewer.querySelector('.slides-viewer-content').innerHTML = 
+                        `<div class="slides-viewer-loading" style="color: #ff6b6b;">❌ 加载失败: ${error.message}</div>`;
+                }
+            }
+        }
+        
+        // 更新幻灯片显示
+        function updateSlidesViewer(viewerId) {
+            const data = slidesViewerData[viewerId];
+            if (!data) return;
             
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
+            const viewer = document.getElementById(viewerId);
+            if (!viewer) return;
+            
+            const { slides, currentIndex } = data;
+            const slide = slides[currentIndex];
+            
+            // 更新计数器
+            viewer.querySelector('.slides-viewer-counter').textContent = 
+                `${currentIndex + 1} / ${slides.length}`;
+            
+            // 更新按钮状态
+            viewer.querySelector('.prev-btn').disabled = currentIndex === 0;
+            viewer.querySelector('.next-btn').disabled = currentIndex === slides.length - 1;
+            
+            // 更新内容
+            const content = viewer.querySelector('.slides-viewer-content');
+            content.innerHTML = `<img src="${slide.imageUrl}" alt="幻灯片 ${currentIndex + 1}" onerror="this.parentElement.innerHTML='<div class=slides-viewer-loading style=color:#ff6b6b>❌ 图片加载失败</div>'">`;
+            
+            // 更新缩略图选中状态
+            viewer.querySelectorAll('.slides-thumbnail').forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === currentIndex);
+            });
+        }
+        
+        // 渲染缩略图
+        function renderSlidesThumbnails(viewerId) {
+            const data = slidesViewerData[viewerId];
+            if (!data) return;
+            
+            const viewer = document.getElementById(viewerId);
+            if (!viewer) return;
+            
+            const thumbnailsContainer = viewer.querySelector('.slides-thumbnails');
+            thumbnailsContainer.innerHTML = data.slides.map((slide, i) => `
+                <div class="slides-thumbnail ${i === 0 ? 'active' : ''}" onclick="slidesViewerGoTo('${viewerId}', ${i})">
+                    <img src="${slide.imageUrl}" alt="缩略图 ${i + 1}">
+                </div>
+            `).join('');
+        }
+        
+        // 幻灯片导航函数
+        function slidesViewerPrev(viewerId) {
+            const data = slidesViewerData[viewerId];
+            if (!data || data.currentIndex <= 0) return;
+            data.currentIndex--;
+            updateSlidesViewer(viewerId);
+        }
+        
+        function slidesViewerNext(viewerId) {
+            const data = slidesViewerData[viewerId];
+            if (!data || data.currentIndex >= data.slides.length - 1) return;
+            data.currentIndex++;
+            updateSlidesViewer(viewerId);
+        }
+        
+        function slidesViewerGoTo(viewerId, index) {
+            const data = slidesViewerData[viewerId];
+            if (!data || index < 0 || index >= data.slides.length) return;
+            data.currentIndex = index;
+            updateSlidesViewer(viewerId);
         }
         
         // Markdown 渲染函数
